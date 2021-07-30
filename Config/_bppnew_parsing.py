@@ -190,15 +190,15 @@ def run_bpp_program(code, p_args, author, runner):
 
 			elif result[0] == "gd":
 				v_name = args[0]
-				if (v_name,) not in db.get_entries("b++2variables", columns=["name"]):
+				wanted_var = db.get_entries("b++2variables", columns=["name", "owner"], conditions={"name": v_name})
+				if len(wanted_var) == 0:
 					v_value = express_array(result[1]) if type(result[1]) == list else result[1]
 
 					db.add_entry("b++2variables", [v_name, str(v_value), var_type(v_value), str(author)])
 					result = ""
 
 				else:
-					v_list = db.get_entries("b++2variables", columns=["name", "owner"])
-					v_owner = [v for v in v_list if v_name == v[0]][0][1]
+					v_owner = wanted_var[0][1]
 
 					if v_owner != str(author):
 						raise PermissionError(
@@ -212,12 +212,12 @@ def run_bpp_program(code, p_args, author, runner):
 				
 			elif result[0] == "gv":
 				v_name = args[0]
+				wanted_var = db.get_entries("b++2variables", columns=["name", "value", "type"], conditions={"name": v_name})
 
-				if (v_name,) not in db.get_entries("b++2variables", columns=["name"]):
+				if len(wanted_var) == 0:
 					raise NameError(f"No global variable by the name {safe_cut(v_name)} defined")
 
-				v_list = db.get_entries("b++2variables", columns=["name", "value", "type"])
-				v_value, v_type = [v[1:3] for v in v_list if v[0] == v_name][0]
+				v_value, v_type = wanted_var[0][1], wanted_var[0][2]
 				v_value = type_list[v_type](v_value)
 
 				result = v_value
