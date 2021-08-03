@@ -227,7 +227,25 @@ def run_bpp_program(code, p_args, author, runner):
 
 			elif result[0] == "id":
 				result = runner.id
-		
+
+			elif result[0] == "gdl":
+                                v_name = args[0]
+				wanted_var = db.get_entries("b++2variables", columns=["name", "owner"], conditions={"name": v_name})
+				if len(wanted_var) == 0:
+					raise NameError(f"No global variable by the name {safe_cut(v_name)} defined"
+
+				else:
+					v_owner = wanted_var[0][1]
+
+					if v_owner != str(author):
+						raise PermissionError(
+						f"Only the author of the {v_name} variable can delete it ({v_owner})")
+					
+					db.remove_entry(
+						"b++2variables",
+						conditions={"name": v_name})
+					result = ""
+                                	
 		functions[k] = result
 		return result
 

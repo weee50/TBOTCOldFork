@@ -94,6 +94,16 @@ def GLOBALVAR(a):
 	
 	return ("gv", a)
 
+def GLOBALDELETE(a):
+	if type(a) != str:
+		raise NameError(f"Global variable name must be a string: {safe_cut(a)}")
+
+	if re.search(r"[^A-Za-z_0-9]", a) or re.search(r"[0-9]", a[0]):
+		raise NameError(
+		f"Global variable name must be only letters, underscores and numbers, and cannot start with a number: {safe_cut(a)}")
+	
+	return ("gdl", a)
+
 def DEFINE(a, b):
 	if type(a) != str:
 		raise NameError(f"Variable name must be a string: {safe_cut(a)}")
@@ -278,5 +288,6 @@ FUNCTIONS = {
 	"LENGTH": LENGTH,
 	"USERNAME": USERNAME,
 	"USERID": USERID,
-	"SLICE": SLICE
+	"SLICE": SLICE,
+	"GLOBAL DELETE": GLOBALDELETE
 }
