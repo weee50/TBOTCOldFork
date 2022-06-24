@@ -338,6 +338,9 @@ def COS(a):
 	
 	return math.cos(float(a))
 
+def PI():
+	return math.pi
+
 def MINFUNC(a):
 	if not type(a) == list:
 		raise ValueError(f"MIN function parameter is not a list: {safe_cut(a)}")
@@ -404,5 +407,6 @@ FUNCTIONS = {
 	"MIN": MINFUNC,
 	"MAX": MAXFUNC,
 	"SHUFFLE": SHUFFLE,
-	"SORT": SORTFUNC
+	"SORT": SORTFUNC,
+	"PI": PI
 }
