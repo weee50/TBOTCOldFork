@@ -34,13 +34,18 @@ async def event_task(): # This is an event handler for the time-based functions 
 					if not SERVERS[server]["EVENTS"][event].RUNNING:
 						continue # We only care about events that are currently running
 
+					two_sec_func = None
 					try:
-						status = await SERVERS[server]["EVENTS"][event].on_two_second()
+						two_sec_func = SERVERS[server]["EVENTS"][event].on_two_second
+					except AttributeError as e:
+						pass
+
+					if two_sec_func is not None:
+						status = await two_sec_func()
+						
 						if status is False: # "return False"
 							SERVERS[server]["EVENTS"][event].end()
 							continue
-					except AttributeError as e:
-						pass
 					
 					# If the hour just changed, run the hour function
 					if hour_function:
@@ -75,6 +80,8 @@ async def on_ready():
 	global SERVERS
 
 	open("Config/_tr_gen.txt", "w").close()
+
+	BRAIN.loop.create_task(event_task())
 
 	from Config._servers import SERVERS, MAIN_SERVER
 
@@ -157,7 +164,7 @@ async def on_ready():
 	
 	@BRAIN.event
 	async def on_message(message):
-
+		
 		# Ignore bot messages
 		if message.author == BRAIN.user: return
 		
@@ -169,10 +176,32 @@ async def on_ready():
 				for event in msg_guild["EVENTS"].keys():
 					if not msg_guild["EVENTS"][event].RUNNING:
 						continue
+
 					try:
-						await msg_guild["EVENTS"][event].on_message(message)
-					except:
-						pass
+						on_msg_func = msg_guild["EVENTS"][event].on_message
+					except AttributeError:
+						continue
+
+					await on_msg_func(message)
+
+			elif message.guild is None:
+
+				# Made for events in TWOW Central that are ran in DMs 
+				tc_guild = None
+				for server in list(SERVERS.keys()):
+					if SERVERS[server]["MAIN"].id == PARAMS["MAIN_SERVER"]["ID"]: tc_guild = SERVERS[server]
+
+				if tc_guild is not None:
+					dm_events = ["DESCRIPTION_DETECTIVE", "RESPONDING", "SPEEDCOUNTER", "INVISIBLE_RULES"]
+
+					for event in tc_guild["EVENTS"].keys():
+						if event in dm_events and tc_guild["EVENTS"][event].RUNNING:
+							try:
+								on_msg_func = tc_guild["EVENTS"][event].on_message
+							except AttributeError:
+								continue
+
+							await on_msg_func(message)
 			
 			# Not bother with non-commands from here on
 			msg_guild = None
@@ -183,6 +212,7 @@ async def on_ready():
 				if message.guild is None:
 					msg_guild = SERVERS[server]
 					break
+
 				elif message.guild.id == int(server):
 					msg_guild = SERVERS[server]
 					break
@@ -202,7 +232,7 @@ async def on_ready():
 				return
 
 			if perms < 2 and (message.guild is not None and message.channel not in msg_guild["BOT_CHANNELS"]):
-				return # Ignore commands from non-staff that are not in bot channels
+				return # Ignore commands from non-staff that are not in bot channels'
 			
 			if message.author.id == 382925349144494080:
 				await message.channel.send("Nice one, Bazboomer.")
@@ -222,6 +252,10 @@ async def on_ready():
 			args = message.content[len(msg_PREFIX):].split(" ") # The arguments passed in the command
 			command = args[0].upper() # The top-level command used
 			level = len(args) # The number of arguments used in the command
+
+			# Check if command is either "respond" or "edit" and if so stop
+			# This is for the RESPONDING event
+			if command == "RESPOND" or command == "EDIT": return
 
 			# If the command is not found, it checks if it's just an alias of any actual command
 			if command not in PARAMS["COMMANDS"].keys():
@@ -321,6 +355,6 @@ async def on_ready():
 					f"**Error occured in {msg_guild['MAIN'].name}!**```python\n{traceback.format_exc()}```")
 			except:
 				pass
-
-BRAIN.loop.create_task(event_task()) # This is an event handler for the time-based functions of various events
+	
+	
 BRAIN.run(TOKEN)
