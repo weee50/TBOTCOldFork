@@ -19,23 +19,19 @@ class EVENT:
 	# Executes when activated
 	def start(self, SERVER): # Set the parameters
 		self.SERVER = SERVER
+		self.CHANNEL = MAIN_SERVER["GENERAL_1"]
 		self.BIRTHDAY_ROLE = MAIN_SERVER["BIRTHDAY"]
 		self.RUNNING = True
 
 	
 	# Executes when deactivated
 	def end(self): # Reset the parameters
-		self.param = {
-			"CHANNEL": "general",
-		}
 		self.RUNNING = False
 	
 	# Function that runs every hour
 	async def on_one_hour(self):
 		current_time = datetime.utcnow()
 		hour = current_time.hour
-
-		self.CHANNEL = discord.utils.get(self.SERVER["MAIN"].channels, name=self.param["CHANNEL"])
 
 		day_change_tz = []
 		for timezone in range(-12, 15): # For each timezone
